@@ -238,4 +238,5 @@ export type Guide = {
   ctaHref: string;
   published: boolean;
   sortOrder: number;
+  guideType: "normal" | "listicle";
 };

@@ -10,10 +10,10 @@ import mandala from "@/assets/mandala.png";
 import type { GuideContent, GuideComparisonTable } from "@/lib/guidesContent";
 import { REVIEWER, RESTAURANT_ADDRESS, RESTAURANT_PHONE_DISPLAY, RESTAURANT_PHONE_TEL, guidesContent } from "@/lib/guidesContent";
 
-const SITE_URL = "https://www.thegrandpalace.com.au";
-const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(RESTAURANT_ADDRESS + ", Australia");
+export const SITE_URL = "https://www.thegrandpalace.com.au";
+export const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(RESTAURANT_ADDRESS + ", Australia");
 
-function buildSchema(guide: GuideContent) {
+export function buildSchema(guide: GuideContent) {
   const url = `${SITE_URL}/guides/${guide.slug}`;
 
   const articleSchema = {
@@ -80,7 +80,7 @@ function buildSchema(guide: GuideContent) {
  *  "{{size:NNpx}}text{{/size}}" as a precisely resized span — works inside
  *  headings (H1/H2) as well as body paragraphs, so a title or section
  *  heading can carry any of these without any code change. */
-function renderRich(text: string): ReactNode[] {
+export function renderRich(text: string): ReactNode[] {
   const parts: ReactNode[] = [];
   const re = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|\{\{color:(#[0-9a-fA-F]{3,8})\}\}([\s\S]*?)\{\{\/color\}\}|\{\{size:(\d{1,3})px\}\}([\s\S]*?)\{\{\/size\}\}/g;
   let last = 0;
@@ -123,7 +123,7 @@ function renderRich(text: string): ReactNode[] {
 /** Renders body paragraphs, treating any paragraph starting with "## " or
  *  "### " as a real heading (font-display styled) instead of a plain <p> —
  *  lets admin content include mid-section subheadings without a code change. */
-function renderBody(paragraphs: string[], pClassName: string): ReactNode[] {
+export function renderBody(paragraphs: string[], pClassName: string): ReactNode[] {
   return paragraphs.map((p, j) => {
     const h2 = p.match(/^##\s+(.+)/);
     if (h2) return <h2 key={j} className="font-display text-lg md:text-xl text-palace mt-5 mb-2 first:mt-0">{renderRich(h2[1])}</h2>;
@@ -133,11 +133,11 @@ function renderBody(paragraphs: string[], pClassName: string): ReactNode[] {
   });
 }
 
-function slugify(s: string) {
+export function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-const EXPLORE_LINKS = [
+export const EXPLORE_LINKS = [
   { label: "Full À la Carte Menu", to: "/menu" },
   { label: "Book a Table", to: "/book-a-table" },
   { label: "Set Menu Banquets", to: "/set-menu" },
@@ -161,7 +161,7 @@ const BANNER_STYLES: Record<string, { icon: typeof Sparkles; gradient: string; l
   lebanese: { icon: Utensils, gradient: "linear-gradient(135deg,#556b2f,#8a9a4a)", label: "Lebanese" },
 };
 
-function MobileCTABar({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: string }) {
+export function MobileCTABar({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: string }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 560);
@@ -385,26 +385,47 @@ function RankCard({ section, num, compact, factsRow }: {
   );
 }
 
-/** Groups sections into render blocks: rank #1 stays a full-width feature,
- *  ranks 2+ collapse into one dense grid, everything else renders inline. */
+/** Groups sections into render blocks: the first ranked listing stays a
+ *  full-width feature, the rest collapse into one dense grid, everything
+ *  else renders inline. A section counts as a ranked listing either the old
+ *  way (heading starts "1. ", "2. " etc., with no blockType set — legacy
+ *  content) or the new explicit way (`blockType === "listing"`, regardless
+ *  of heading text) — the latter is what lets an admin pick "Listing
+ *  (ranked card)" from the block-type dropdown without also having to
+ *  hand-type a number into the heading. Numbers come from the heading when
+ *  present (preserves exact legacy numbering), otherwise auto-increment. */
 type SectionBlock =
-  | { type: "single"; section: import("@/lib/guidesContent").GuideSection; key: string }
+  | { type: "single"; section: import("@/lib/guidesContent").GuideSection; key: string; num?: string }
   | { type: "grid"; items: { section: import("@/lib/guidesContent").GuideSection; num: string; key: string }[] };
 
 function groupSections(sections: import("@/lib/guidesContent").GuideSection[]): SectionBlock[] {
   const blocks: SectionBlock[] = [];
   let grid: { section: import("@/lib/guidesContent").GuideSection; num: string; key: string }[] = [];
+  let autoNum = 0;
+  let sawFirstListing = false;
   sections.forEach((section, i) => {
     const m = section.heading.match(/^(\d+)\.\s*(.+)/);
-    if (m && m[1] !== "1") {
-      grid.push({ section, num: m[1], key: `s${i}` });
-    } else {
-      if (grid.length) {
-        blocks.push({ type: "grid", items: grid });
-        grid = [];
+    const isListing = section.blockType === "listing" || (!section.blockType && !!m);
+    if (isListing) {
+      autoNum++;
+      const num = m ? m[1] : String(autoNum);
+      if (!sawFirstListing) {
+        sawFirstListing = true;
+        if (grid.length) {
+          blocks.push({ type: "grid", items: grid });
+          grid = [];
+        }
+        blocks.push({ type: "single", section, key: `s${i}`, num });
+        return;
       }
-      blocks.push({ type: "single", section, key: `s${i}` });
+      grid.push({ section, num, key: `s${i}` });
+      return;
     }
+    if (grid.length) {
+      blocks.push({ type: "grid", items: grid });
+      grid = [];
+    }
+    blocks.push({ type: "single", section, key: `s${i}` });
   });
   if (grid.length) blocks.push({ type: "grid", items: grid });
   return blocks;
@@ -495,13 +516,13 @@ export function GuideTemplate({ guide }: { guide: GuideContent }) {
                 guide.comparisonTable?.rows.find((r) => title.toLowerCase().startsWith(r.name.split(" (")[0].toLowerCase()));
 
               if (block.type === "single") {
-                const { section, key } = block;
-                const rankMatch = section.heading.match(/^(\d+)\.\s*(.+)/);
+                const { section, key, num } = block;
 
-                if (rankMatch && (!section.blockType || section.blockType === "listing")) {
+                if (num !== undefined) {
+                  const title = section.heading.replace(/^\d+\.\s*/, "");
                   return (
                     <div key={key} className="mb-6 max-w-3xl mx-auto">
-                      <RankCard section={section} num={rankMatch[1]} compact={false} factsRow={findFacts(rankMatch[2])} />
+                      <RankCard section={section} num={num} compact={false} factsRow={findFacts(title)} />
                     </div>
                   );
                 }

@@ -38,6 +38,7 @@ export function GuideEditor({
   const [metaTitle, setMetaTitle] = useState(guide?.metaTitle ?? "");
   const [metaDescription, setMetaDescription] = useState(guide?.metaDescription ?? "");
   const [tag, setTag] = useState(guide?.tag ?? "Dining");
+  const [guideType, setGuideType] = useState<"normal" | "listicle">(guide?.guideType ?? "normal");
   const [publishedDate, setPublishedDate] = useState(guide?.publishedDate ?? todayIso());
   const [publishedDateDisplay, setPublishedDateDisplay] = useState(guide?.publishedDateDisplay ?? todayDisplay());
   const [updatedDate, setUpdatedDate] = useState(guide?.updatedDate ?? todayIso());
@@ -66,7 +67,7 @@ export function GuideEditor({
   const save = useMutation({
     mutationFn: () => {
       const data = {
-        title, metaTitle, metaDescription, tag,
+        title, metaTitle, metaDescription, tag, guideType,
         publishedDate, publishedDateDisplay, updatedDate, updatedDateDisplay,
         excerpt, intro,
         quickAnswer: quickAnswer || null,
@@ -164,6 +165,30 @@ export function GuideEditor({
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Guide Type */}
+        <div className={cardCls}>
+          <p className="font-display text-lg text-stone-900 mb-1">Guide Type</p>
+          <p className="text-[12px] text-stone-500 mb-4">Controls which template renders this guide on the live site. Switching types is safe — no content is lost.</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {([
+              { value: "normal" as const, title: "Normal Guide", desc: "Simple single-column article — intro, sections, FAQ. No ranked cards or comparison table." },
+              { value: "listicle" as const, title: "Listicle Guide", desc: "Ranked-card grid + \"Compare at a Glance\" table — the \"Best N Restaurants\" style layout." },
+            ]).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setGuideType(opt.value)}
+                className={`text-left rounded-xl border-2 p-4 transition ${
+                  guideType === opt.value ? "border-amber-500 bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"
+                }`}
+              >
+                <p className="font-semibold text-sm text-stone-900 mb-1">{opt.title}</p>
+                <p className="text-[12px] text-stone-500 leading-relaxed">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Basics */}
         <div className={cardCls}>
           <p className="font-display text-lg text-stone-900 mb-4">Basics & SEO</p>
@@ -253,7 +278,8 @@ export function GuideEditor({
         <div className={cardCls}>
           <p className="font-display text-lg text-stone-900 mb-1">Sections & Listings</p>
           <p className="text-[12px] text-stone-500 mb-4">
-            Pick a block type per section: <strong>Listing</strong> is a numbered ranked card (heading like "1. Restaurant — Suburb"),
+            Pick a block type per section: <strong>Listing</strong> is a numbered ranked card — pick it from the dropdown and it's auto-numbered by
+            order, or type a heading like "1. Restaurant — Suburb" for exact numbering,
             <strong> Text</strong> is a plain heading + paragraphs section, <strong>Box</strong> is a highlighted callout, and{" "}
             <strong>Row</strong> lays out short items side by side. In any paragraph, start a line with <code>## </code> for a subheading
             or <code>### </code> for a smaller one. Select text in any field's toolbar to add a link, a highlight, a custom colour, or

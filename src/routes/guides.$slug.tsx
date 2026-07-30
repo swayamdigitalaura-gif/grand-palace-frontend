@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { GuideTemplate } from "@/components/GuideTemplate";
+import { NormalGuideTemplate } from "@/components/NormalGuideTemplate";
 import { getGuide, type GuideContent } from "@/lib/guidesContent";
 import { API_URL, type Guide } from "@/lib/admin-api";
 
@@ -33,6 +34,7 @@ async function fetchGuideFromApi(slug: string): Promise<GuideContent | null> {
       relatedSlugs: g.relatedSlugs,
       ctaLabel: g.ctaLabel,
       ctaHref: g.ctaHref,
+      guideType: g.guideType,
     };
   } catch {
     return null;
@@ -61,5 +63,10 @@ export const Route = createFileRoute("/guides/$slug")({
 
 function GuidePage() {
   const guide = Route.useLoaderData();
-  return <GuideTemplate guide={guide} />;
+  // guideType is only ever undefined for the bundled static guides (they
+  // predate this field) — all of those are listicle-style, so undefined
+  // defaults to "listicle" to keep their appearance unchanged.
+  return guide.guideType === "normal"
+    ? <NormalGuideTemplate guide={guide} />
+    : <GuideTemplate guide={guide} />;
 }

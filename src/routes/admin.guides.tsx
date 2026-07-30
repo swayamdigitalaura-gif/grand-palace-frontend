@@ -88,7 +88,9 @@ function AdminGuides() {
                   onToggle={() => api.patch(`/api/guides/${guide.id}`, { published: !guide.published }).then(invalidate)}
                 />
               </div>
-              <p className="text-[11px] text-stone-500 mt-0.5">/guides/{guide.slug} · {guide.tag}</p>
+              <p className="text-[11px] text-stone-500 mt-0.5">
+                /guides/{guide.slug} · {guide.tag} · <span className={guide.guideType === "listicle" ? "text-amber-700 font-semibold" : ""}>{guide.guideType === "listicle" ? "Listicle" : "Normal"}</span>
+              </p>
               <div className="flex gap-4 mt-2">
                 <button onClick={() => setEditingGuide(guide)} className="text-[12px] text-amber-700 font-semibold">Edit</button>
                 <DeleteButton guide={guide} onDeleted={invalidate} />

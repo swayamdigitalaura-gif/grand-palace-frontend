@@ -77,6 +77,11 @@ export interface GuideContent {
   relatedSlugs: string[];
   ctaLabel: string;
   ctaHref: string;
+  /** "listicle" = ranked-card grid + comparison table (GuideTemplate). "normal" = simple
+   *  single-column article layout (NormalGuideTemplate). Undefined only happens for the
+   *  bundled static guides below, which are all pre-existing listicle-style content — treat
+   *  undefined as "listicle" wherever this field is read, to avoid changing their appearance. */
+  guideType?: "normal" | "listicle";
 }
 
 const AUTHOR_NAME = "Nirav Shah";
