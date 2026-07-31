@@ -320,14 +320,34 @@ function BulletGroups({ bullets, compact }: { bullets: string[]; compact: boolea
   );
 }
 
+/* Renders bullets as Title + Description cards, styled identically to the
+   Features/Dietary labels (orange uppercase label, description below). Used
+   anywhere a section has structured bulletItems instead of legacy freeform
+   bullets — shared by both the Listicle and Normal guide templates. */
+export function BulletItemCards({ items, textSize = "text-[13px]", className = "space-y-2.5" }: {
+  items: import("@/lib/guidesContent").GuideBulletItem[];
+  textSize?: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      {items.map((item, idx) => (
+        <div key={idx}>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-saffron/80 mb-1">{renderRich(item.title)}</p>
+          <p className={`text-palace/70 leading-relaxed ${textSize}`}>{renderRich(item.description)}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* A single ranked listing — used both as a full-width featured card (#1) and
    as a compact grid tile (everything else), so the list reads as a dense,
    magazine-style grid instead of one long column of near-identical rows. */
-function RankCard({ section, num, compact, factsRow }: {
+function RankCard({ section, num, compact }: {
   section: import("@/lib/guidesContent").GuideSection;
   num: string;
   compact: boolean;
-  factsRow?: import("@/lib/guidesContent").GuideComparisonRow;
 }) {
   const title = section.heading.replace(/^\d+\.\s*/, "");
   const isTopPick = num === "1";
@@ -367,31 +387,35 @@ function RankCard({ section, num, compact, factsRow }: {
         )}
         <h2 className={`font-display text-palace mb-2 ${compact ? "text-base" : "text-lg md:text-xl"}`}>{renderRich(title)}</h2>
 
-        {/* Per-restaurant table — Area / Style / Dietary / Groups, sourced straight from the comparison data.
-            Admin can turn this off per-card (showFactsTable: false) when the bullets already cover dietary info,
-            to avoid showing "Dietary" twice. */}
-        {factsRow && section.showFactsTable !== false && (
+        {/* Per-restaurant Address / Timing table — plain fields on the section itself, admin-editable.
+            Only shows rows that actually have a value; admin can also turn the whole thing off
+            (showFactsTable: false) when it's not relevant for a particular card. */}
+        {section.showFactsTable !== false && (section.address || section.timing) && (
           <table className={`w-full mb-3 rounded-lg overflow-hidden border border-saffron/15 ${compact ? "text-[11px]" : "text-[12.5px]"}`}>
-            <caption className="sr-only">Key facts for {factsRow.name}</caption>
+            <caption className="sr-only">Key facts for {title}</caption>
             <tbody>
-              <tr className="border-b border-saffron/10">
-                <th scope="row" className="text-left font-semibold text-palace/60 bg-cream/40 px-2.5 py-1.5 w-[38%]">Area</th>
-                <td className="px-2.5 py-1.5 text-palace/75">{factsRow.area}</td>
-              </tr>
-              <tr className="border-b border-saffron/10">
-                <th scope="row" className="text-left font-semibold text-palace/60 bg-cream/40 px-2.5 py-1.5">Dietary</th>
-                <td className="px-2.5 py-1.5 text-palace/75">{factsRow.dietary}</td>
-              </tr>
-              <tr>
-                <th scope="row" className="text-left font-semibold text-palace/60 bg-cream/40 px-2.5 py-1.5">Groups</th>
-                <td className="px-2.5 py-1.5 text-palace/75">{factsRow.goodForGroups ? "Good for groups" : "Best for smaller visits"}</td>
-              </tr>
+              {section.address && (
+                <tr className={section.timing ? "border-b border-saffron/10" : ""}>
+                  <th scope="row" className="text-left font-semibold text-palace/60 bg-cream/40 px-2.5 py-1.5 w-[38%]">Address</th>
+                  <td className="px-2.5 py-1.5 text-palace/75">{section.address}</td>
+                </tr>
+              )}
+              {section.timing && (
+                <tr>
+                  <th scope="row" className="text-left font-semibold text-palace/60 bg-cream/40 px-2.5 py-1.5 w-[38%]">Timing</th>
+                  <td className="px-2.5 py-1.5 text-palace/75">{section.timing}</td>
+                </tr>
+              )}
             </tbody>
           </table>
         )}
 
         {renderBody(section.body, `text-palace/70 leading-relaxed mb-2.5 ${compact ? "text-[12.5px]" : "text-[13.5px]"}`)}
-        {section.bullets && <BulletGroups bullets={section.bullets} compact={compact} />}
+        {section.bulletItems && section.bulletItems.length > 0 ? (
+          <BulletItemCards items={section.bulletItems} textSize={compact ? "text-[11.5px]" : "text-[13px]"} className="mt-auto space-y-2.5" />
+        ) : (
+          section.bullets && <BulletGroups bullets={section.bullets} compact={compact} />
+        )}
       </div>
     </div>
   );
@@ -524,17 +548,13 @@ export function GuideTemplate({ guide }: { guide: GuideContent }) {
             {guide.comparisonTable && <ComparisonTable table={guide.comparisonTable} />}
 
             {groupSections(guide.sections).map((block) => {
-              const findFacts = (title: string) =>
-                guide.comparisonTable?.rows.find((r) => title.toLowerCase().startsWith(r.name.split(" (")[0].toLowerCase()));
-
               if (block.type === "single") {
                 const { section, key, num } = block;
 
                 if (num !== undefined) {
-                  const title = section.heading.replace(/^\d+\.\s*/, "");
                   return (
                     <div key={key} className="mb-6 max-w-3xl mx-auto">
-                      <RankCard section={section} num={num} compact={false} factsRow={findFacts(title)} />
+                      <RankCard section={section} num={num} compact={false} />
                     </div>
                   );
                 }
@@ -544,7 +564,9 @@ export function GuideTemplate({ guide }: { guide: GuideContent }) {
                     <div key={key} id={slugify(section.heading)} className="mb-8 max-w-3xl mx-auto scroll-mt-24 rounded-2xl border-l-4 border-saffron bg-white/90 p-5 md:p-6 shadow-sm">
                       {section.heading && <h2 className="font-display text-lg md:text-xl text-palace mb-2">{renderRich(section.heading)}</h2>}
                       {renderBody(section.body, "text-palace/75 text-[14px] leading-relaxed mb-2.5")}
-                      {section.bullets && (
+                      {section.bulletItems && section.bulletItems.length > 0 ? (
+                        <BulletItemCards items={section.bulletItems} textSize="text-[14px]" className="mt-1 space-y-2.5" />
+                      ) : section.bullets && (
                         <ul className="space-y-1.5 mt-1">
                           {section.bullets.map((b, j) => (
                             <li key={j} className="flex items-start gap-2 text-palace/70 text-[14px] leading-relaxed">
@@ -577,7 +599,9 @@ export function GuideTemplate({ guide }: { guide: GuideContent }) {
                   <div key={key} id={slugify(section.heading)} className="mb-8 max-w-3xl mx-auto scroll-mt-24">
                     <h2 className="font-display text-xl md:text-2xl text-palace mb-3">{renderRich(section.heading)}</h2>
                     {renderBody(section.body, "text-palace/70 text-[14px] leading-relaxed mb-3")}
-                    {section.bullets && (
+                    {section.bulletItems && section.bulletItems.length > 0 ? (
+                      <BulletItemCards items={section.bulletItems} textSize="text-[14px]" className="mt-2 space-y-2.5" />
+                    ) : section.bullets && (
                       <ul className="space-y-1.5 mt-2">
                         {section.bullets.map((b, j) => (
                           <li key={j} className="flex items-start gap-2 text-palace/70 text-[14px] leading-relaxed">
@@ -592,10 +616,9 @@ export function GuideTemplate({ guide }: { guide: GuideContent }) {
 
               return (
                 <div key={block.items[0]?.key} className="grid sm:grid-cols-2 gap-5 mb-8 [&>*:last-child:nth-child(odd)]:sm:col-span-2">
-                  {block.items.map(({ section, num, key }) => {
-                    const title = section.heading.replace(/^\d+\.\s*/, "");
-                    return <RankCard key={key} section={section} num={num} compact factsRow={findFacts(title)} />;
-                  })}
+                  {block.items.map(({ section, num, key }) => (
+                    <RankCard key={key} section={section} num={num} compact />
+                  ))}
                 </div>
               );
             })}

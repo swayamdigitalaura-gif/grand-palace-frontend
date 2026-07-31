@@ -212,7 +212,12 @@ export type GuideQuickFact = { label: string; value: string };
 export type GuideComparisonRow = { name: string; area: string; style: string; dietary: string; goodForGroups: boolean; highlight?: boolean };
 export type GuideComparisonTable = { title: string; note?: string; rows: GuideComparisonRow[] };
 export type GuideBlockType = "listing" | "text" | "box" | "row";
-export type GuideSection = { heading: string; body: string[]; bullets?: string[]; image?: string; imageAlt?: string; bannerIcon?: string; blockType?: GuideBlockType; items?: string[]; showFactsTable?: boolean };
+export type GuideBulletItem = { title: string; description: string };
+export type GuideSection = {
+  heading: string; body: string[]; bullets?: string[]; bulletItems?: GuideBulletItem[];
+  image?: string; imageAlt?: string; bannerIcon?: string; blockType?: GuideBlockType; items?: string[];
+  showFactsTable?: boolean; address?: string; timing?: string;
+};
 export type GuideFAQ = { q: string; a: string };
 export type GuideExternalLink = { label: string; href: string; source: string };
 export type GuidePricingRow = { item: string; price: string; note?: string };

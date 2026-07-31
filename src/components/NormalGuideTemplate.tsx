@@ -5,7 +5,7 @@ import mandala from "@/assets/mandala.png";
 import type { GuideContent } from "@/lib/guidesContent";
 import { REVIEWER, RESTAURANT_ADDRESS, RESTAURANT_PHONE_DISPLAY, RESTAURANT_PHONE_TEL, guidesContent } from "@/lib/guidesContent";
 import {
-  buildSchema, renderRich, renderBody, slugify, MobileCTABar, EXPLORE_LINKS, MAPS_URL,
+  buildSchema, renderRich, renderBody, slugify, MobileCTABar, EXPLORE_LINKS, MAPS_URL, BulletItemCards,
 } from "@/components/GuideTemplate";
 
 /** Simple single-column article layout for standalone guide content that
@@ -99,7 +99,9 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
                 <div key={key} id={slugify(section.heading)} className="mb-8 scroll-mt-24 rounded-2xl border-l-4 border-saffron bg-white/90 p-5 md:p-6 shadow-sm">
                   {section.heading && <h2 className="font-display text-lg md:text-xl text-palace mb-2">{renderRich(section.heading)}</h2>}
                   {renderBody(section.body, "text-palace/75 text-[14px] leading-relaxed mb-2.5")}
-                  {section.bullets && (
+                  {section.bulletItems && section.bulletItems.length > 0 ? (
+                    <BulletItemCards items={section.bulletItems} textSize="text-[14px]" className="mt-1 space-y-2.5" />
+                  ) : section.bullets && (
                     <ul className="space-y-1.5 mt-1">
                       {section.bullets.map((b, j) => (
                         <li key={j} className="flex items-start gap-2 text-palace/70 text-[14px] leading-relaxed">
@@ -132,7 +134,9 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
               <div key={key} id={slugify(section.heading)} className="mb-8 scroll-mt-24">
                 <h2 className="font-display text-xl md:text-2xl text-palace mb-3">{renderRich(section.heading)}</h2>
                 {renderBody(section.body, "text-palace/70 text-[14px] leading-relaxed mb-3")}
-                {section.bullets && (
+                {section.bulletItems && section.bulletItems.length > 0 ? (
+                  <BulletItemCards items={section.bulletItems} textSize="text-[14px]" className="mt-2 space-y-2.5" />
+                ) : section.bullets && (
                   <ul className="space-y-1.5 mt-2">
                     {section.bullets.map((b, j) => (
                       <li key={j} className="flex items-start gap-2 text-palace/70 text-[14px] leading-relaxed">

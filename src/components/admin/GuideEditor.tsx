@@ -327,14 +327,26 @@ export function GuideEditor({
                 )}
 
                 {blockType === "listing" && (
+                  <div className="grid sm:grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className={labelCls}>Address</label>
+                      <input className={inputCls} value={sec.address ?? ""} onChange={(e) => setSec({ address: e.target.value })} placeholder="e.g. 12 George St, Surry Hills NSW" />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Timing</label>
+                      <input className={inputCls} value={sec.timing ?? ""} onChange={(e) => setSec({ timing: e.target.value })} placeholder="e.g. Lunch & dinner, 7 days" />
+                    </div>
+                  </div>
+                )}
+
+                {blockType === "listing" && (
                   <label className="flex items-center gap-2 mb-3 text-[12.5px] text-stone-600">
                     <input
                       type="checkbox"
                       checked={sec.showFactsTable !== false}
                       onChange={(e) => setSec({ showFactsTable: e.target.checked })}
                     />
-                    Show Area / Dietary / Groups facts table (auto-filled from the Compare at a Glance row above with a matching name).
-                    Turn off if your bullets below already cover dietary info, to avoid showing it twice.
+                    Show the Address/Timing facts table above (only appears if at least one of them has a value).
                   </label>
                 )}
 
@@ -352,19 +364,48 @@ export function GuideEditor({
                     <button className="text-[12px] text-amber-700 font-semibold mb-3" onClick={() => setSec({ body: [...sec.body, ""] })}>+ Add paragraph</button>
 
                     <label className={`${labelCls} mt-2`}>
-                      Bullets — plain bullets like "Best for: ..." or "Try: ..." just show as a list. Start a bullet with
-                      "Features:" or "Dietary options:" to group it under that styled label, or "AnyLabel:: text" (double colon)
-                      for a custom label of your own.
+                      Bullet points — each one gets a Title and a Description, shown as a styled card (same look as Features/Dietary).
                     </label>
-                    {(sec.bullets ?? []).map((b, j) => (
-                      <div key={j} className="flex items-start gap-2 mb-1.5">
-                        <div className="flex-1 min-w-0">
-                          <RichTextInput className={inputCls} value={b} onChange={(v) => setSec({ bullets: (sec.bullets ?? []).map((bb, bi) => bi === j ? v : bb) })} />
+                    {(sec.bulletItems ?? []).map((item, j) => {
+                      const items = sec.bulletItems ?? [];
+                      const moveItem = (dir: -1 | 1) => {
+                        const target = j + dir;
+                        if (target < 0 || target >= items.length) return;
+                        const next = [...items];
+                        [next[j], next[target]] = [next[target], next[j]];
+                        setSec({ bulletItems: next });
+                      };
+                      return (
+                        <div key={j} className="flex items-start gap-2 mb-2 rounded-lg border border-stone-200 p-2.5">
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            <RichTextInput
+                              className={inputCls}
+                              value={item.title}
+                              onChange={(v) => setSec({ bulletItems: items.map((it, ii) => ii === j ? { ...it, title: v } : it) })}
+                              placeholder="Title (e.g. Free Parking)"
+                            />
+                            <RichTextArea
+                              className={inputCls}
+                              rows={2}
+                              value={item.description}
+                              onChange={(v) => setSec({ bulletItems: items.map((it, ii) => ii === j ? { ...it, description: v } : it) })}
+                              placeholder="Description (e.g. Plenty of parking spaces available for visitors.)"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1 shrink-0">
+                            <button className="text-stone-400 hover:text-stone-700 text-xs disabled:opacity-30" disabled={j === 0} onClick={() => moveItem(-1)} title="Move up">↑</button>
+                            <button className="text-stone-400 hover:text-stone-700 text-xs disabled:opacity-30" disabled={j === items.length - 1} onClick={() => moveItem(1)} title="Move down">↓</button>
+                            <button className="text-red-500 text-xs" onClick={() => setSec({ bulletItems: items.filter((_, ii) => ii !== j) })} title="Delete">✕</button>
+                          </div>
                         </div>
-                        <button className="text-red-500 text-xs shrink-0 mt-6" onClick={() => setSec({ bullets: (sec.bullets ?? []).filter((_, bi) => bi !== j) })}>✕</button>
-                      </div>
-                    ))}
-                    <button className="text-[12px] text-amber-700 font-semibold" onClick={() => setSec({ bullets: [...(sec.bullets ?? []), ""] })}>+ Add bullet</button>
+                      );
+                    })}
+                    <button
+                      className="text-[12px] text-amber-700 font-semibold"
+                      onClick={() => setSec({ bulletItems: [...(sec.bulletItems ?? []), { title: "", description: "" }] })}
+                    >
+                      + Add bullet point
+                    </button>
                   </>
                 )}
 
@@ -386,7 +427,7 @@ export function GuideEditor({
           <div className="flex flex-wrap gap-2">
             <button
               className="btn-outline-gold !text-[11px] !px-4 !py-2"
-              onClick={() => setSections((prev) => [...prev, { blockType: "listing", heading: `${prev.length + 1}. New Restaurant — Suburb`, body: [""], bullets: ["Best for: "] }])}
+              onClick={() => setSections((prev) => [...prev, { blockType: "listing", heading: `${prev.length + 1}. New Restaurant — Suburb`, body: [""], bulletItems: [{ title: "", description: "" }] }])}
             >
               + Add Listing
             </button>

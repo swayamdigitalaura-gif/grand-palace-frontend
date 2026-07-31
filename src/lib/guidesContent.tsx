@@ -7,10 +7,18 @@ export interface GuideFAQ {
 
 export type GuideBlockType = "listing" | "text" | "box" | "row";
 
+export interface GuideBulletItem {
+  title: string;
+  description: string;
+}
+
 export interface GuideSection {
   heading: string;
   body: string[];
+  /** Legacy freeform bullets — kept for old content. New content should use bulletItems instead. */
   bullets?: string[];
+  /** Structured Title + Description bullets, rendered as styled cards matching Features/Dietary. */
+  bulletItems?: GuideBulletItem[];
   image?: string;
   imageAlt?: string;
   /** Key into GuideTemplate's BANNER_STYLES — shown as a styled icon banner when there's no photo. */
@@ -19,10 +27,11 @@ export interface GuideSection {
   blockType?: GuideBlockType;
   /** Used by the "row" block type — each string renders as one small card in a horizontal row. */
   items?: string[];
-  /** Whether to show the auto-generated Area/Dietary/Groups facts table (sourced
-   *  from the matching comparisonTable row). Defaults to true; set false when the
-   *  card's own bullets already spell out dietary info to avoid repeating it. */
+  /** Whether to show the Address/Timing facts table. Defaults to true; hides automatically if both are empty. */
   showFactsTable?: boolean;
+  /** Replaces the old Area/Dietary/Groups per-card facts table. */
+  address?: string;
+  timing?: string;
 }
 
 export interface GuidePricingRow {
