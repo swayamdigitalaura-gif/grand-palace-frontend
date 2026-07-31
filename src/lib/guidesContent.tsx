@@ -19,6 +19,10 @@ export interface GuideSection {
   blockType?: GuideBlockType;
   /** Used by the "row" block type — each string renders as one small card in a horizontal row. */
   items?: string[];
+  /** Whether to show the auto-generated Area/Dietary/Groups facts table (sourced
+   *  from the matching comparisonTable row). Defaults to true; set false when the
+   *  card's own bullets already spell out dietary info to avoid repeating it. */
+  showFactsTable?: boolean;
 }
 
 export interface GuidePricingRow {

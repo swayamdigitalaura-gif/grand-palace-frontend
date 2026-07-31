@@ -367,8 +367,10 @@ function RankCard({ section, num, compact, factsRow }: {
         )}
         <h2 className={`font-display text-palace mb-2 ${compact ? "text-base" : "text-lg md:text-xl"}`}>{renderRich(title)}</h2>
 
-        {/* Per-restaurant table — Area / Style / Dietary / Groups, sourced straight from the comparison data */}
-        {factsRow && (
+        {/* Per-restaurant table — Area / Style / Dietary / Groups, sourced straight from the comparison data.
+            Admin can turn this off per-card (showFactsTable: false) when the bullets already cover dietary info,
+            to avoid showing "Dietary" twice. */}
+        {factsRow && section.showFactsTable !== false && (
           <table className={`w-full mb-3 rounded-lg overflow-hidden border border-saffron/15 ${compact ? "text-[11px]" : "text-[12.5px]"}`}>
             <caption className="sr-only">Key facts for {factsRow.name}</caption>
             <tbody>

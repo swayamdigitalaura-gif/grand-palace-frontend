@@ -326,6 +326,18 @@ export function GuideEditor({
                   </div>
                 )}
 
+                {blockType === "listing" && (
+                  <label className="flex items-center gap-2 mb-3 text-[12.5px] text-stone-600">
+                    <input
+                      type="checkbox"
+                      checked={sec.showFactsTable !== false}
+                      onChange={(e) => setSec({ showFactsTable: e.target.checked })}
+                    />
+                    Show Area / Dietary / Groups facts table (auto-filled from the Compare at a Glance row above with a matching name).
+                    Turn off if your bullets below already cover dietary info, to avoid showing it twice.
+                  </label>
+                )}
+
                 {blockType !== "row" && (
                   <>
                     <label className={labelCls}>Body paragraph(s)</label>
@@ -339,7 +351,11 @@ export function GuideEditor({
                     ))}
                     <button className="text-[12px] text-amber-700 font-semibold mb-3" onClick={() => setSec({ body: [...sec.body, ""] })}>+ Add paragraph</button>
 
-                    <label className={`${labelCls} mt-2`}>Bullets — prefix with "Best for:", "Try:", "Features:" or "Dietary options:" to group them</label>
+                    <label className={`${labelCls} mt-2`}>
+                      Bullets — plain bullets like "Best for: ..." or "Try: ..." just show as a list. Start a bullet with
+                      "Features:" or "Dietary options:" to group it under that styled label, or "AnyLabel:: text" (double colon)
+                      for a custom label of your own.
+                    </label>
                     {(sec.bullets ?? []).map((b, j) => (
                       <div key={j} className="flex items-start gap-2 mb-1.5">
                         <div className="flex-1 min-w-0">
