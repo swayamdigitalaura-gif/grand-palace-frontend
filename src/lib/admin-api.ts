@@ -1,8 +1,10 @@
-// "" (empty string, set in .env.production) means same-origin/relative —
-// requests go through this site's own /api/** proxy (see vite.config.ts
-// routeRules) rather than directly cross-domain to the backend, so `||`
-// must NOT treat that empty string as "unset".
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+// Absolute backend URL — used by SSR route loaders (menu, gallery, guides,
+// whats-on, sitemap, etc.) that call `fetch(`${API_URL}${path}`)` directly.
+// Those run server-side in the Nitro function, where fetch() has NO implicit
+// origin, so this must stay an absolute URL — do NOT make it "" / relative,
+// that breaks every server-side data fetch on the site (they'd silently
+// fall back to stale bundled/default content instead of throwing loudly).
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 class ApiError extends Error {
   status: number;
@@ -17,7 +19,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   // sets multipart/form-data with the correct boundary itself. Setting it manually
   // (as "application/json") corrupts the upload and the server can't parse it.
   const isFormData = options.body instanceof FormData;
-  const res = await fetch(`${API_URL}${path}`, {
+  // This helper is only ever called from browser-side code (React Query hooks,
+  // form submits) — never from a server-side route loader (those fetch directly
+  // with API_URL above). A relative path here resolves against the current page's
+  // own origin, which the browser proxies through this site's own /api/** route
+  // (see vite.config.ts routeRules) to the separate backend project — making the
+  // auth cookie first-party instead of cross-domain, which browsers increasingly
+  // block by default. Deliberately ignores API_URL, unlike the SSR loaders above.
+  const res = await fetch(path, {
     ...options,
     credentials: "include",
     headers: {
