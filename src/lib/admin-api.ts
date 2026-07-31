@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+// "" (empty string, set in .env.production) means same-origin/relative —
+// requests go through this site's own /api/** proxy (see vite.config.ts
+// routeRules) rather than directly cross-domain to the backend, so `||`
+// must NOT treat that empty string as "unset".
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
 class ApiError extends Error {
   status: number;

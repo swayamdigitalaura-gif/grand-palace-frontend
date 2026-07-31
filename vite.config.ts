@@ -11,7 +11,17 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
-  nitro: { preset: "vercel" },
+  nitro: {
+    preset: "vercel",
+    // Proxies /api/** through this site's own domain to the separate backend
+    // Vercel project, so the browser sees the auth cookie as first-party
+    // instead of cross-domain — modern browsers (Chrome/Edge/Firefox) now
+    // block cross-domain "third-party" cookies by default, which broke
+    // admin login entirely once that rollout reached this project.
+    routeRules: {
+      "/api/**": { proxy: "https://grand-palace-backend.vercel.app/api/**" },
+    },
+  },
   vite: {
     plugins: [
       ViteImageOptimizer({
