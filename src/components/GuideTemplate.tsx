@@ -271,17 +271,29 @@ function ComparisonTable({ table }: { table: GuideComparisonTable }) {
   );
 }
 
-/* Splits a card's bullet list into clearly labeled "Features" / "Dietary
-   Options" groups (falling back to a plain list for anything unlabeled) —
-   easier to scan than one flat bulleted list. */
+/* Splits a card's bullet list into clearly labeled groups (falling back to a
+   plain list for anything unlabeled) — easier to scan than one flat bulleted
+   list. "Features:" / "Dietary options:" (single colon) are the two original
+   built-in labels, kept exactly as before for backward compatibility with
+   existing content. For any OTHER label, use a double colon —
+   "SomeLabel:: text" — e.g. "Ambience:: cosy, candle-lit" — and it becomes
+   its own styled group automatically, with zero code changes needed. Plain
+   single-colon bullets (like "Best for: ..." or "Try: ...") are deliberately
+   left alone so existing guides don't change appearance. */
 function BulletGroups({ bullets, compact }: { bullets: string[]; compact: boolean }) {
-  const groups: Record<string, string[]> = { Features: [], "Dietary Options": [] };
+  const groups: { label: string; values: string[] }[] = [];
   const rest: string[] = [];
   for (const b of bullets) {
-    const m = b.match(/^(Features|Dietary options)\s*:\s*(.+)/i);
+    const builtIn = b.match(/^(Features|Dietary options)\s*:\s*(.+)/i);
+    const custom = b.match(/^([A-Za-z][A-Za-z ]{1,30})::\s*(.+)/);
+    const m = builtIn ?? custom;
     if (m) {
-      const key = /dietary/i.test(m[1]) ? "Dietary Options" : "Features";
-      groups[key].push(m[2]);
+      const label = builtIn
+        ? (/dietary/i.test(m[1]) ? "Dietary Options" : "Features")
+        : m[1].trim().replace(/\s+/g, " ");
+      const existing = groups.find((g) => g.label.toLowerCase() === label.toLowerCase());
+      if (existing) existing.values.push(m[2]);
+      else groups.push({ label, values: [m[2]] });
     } else {
       rest.push(b);
     }
@@ -289,14 +301,12 @@ function BulletGroups({ bullets, compact }: { bullets: string[]; compact: boolea
   const textCls = compact ? "text-[11.5px]" : "text-[13px]";
   return (
     <div className="mt-auto space-y-2.5">
-      {(["Features", "Dietary Options"] as const).map((key) =>
-        groups[key].length ? (
-          <div key={key}>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-saffron/80 mb-1">{key}</p>
-            <p className={`text-palace/70 leading-relaxed ${textCls}`}>{groups[key].join(" · ")}</p>
-          </div>
-        ) : null
-      )}
+      {groups.map((g) => (
+        <div key={g.label}>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-saffron/80 mb-1">{g.label}</p>
+          <p className={`text-palace/70 leading-relaxed ${textCls}`}>{g.values.join(" · ")}</p>
+        </div>
+      ))}
       {rest.length > 0 && (
         <ul className={`space-y-1.5 ${textCls}`}>
           {rest.map((b, j) => (
