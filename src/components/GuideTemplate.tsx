@@ -120,17 +120,58 @@ export function renderRich(text: string): ReactNode[] {
   return parts;
 }
 
-/** Renders body paragraphs, treating any paragraph starting with "## " or
- *  "### " as a real heading (font-display styled) instead of a plain <p> —
- *  lets admin content include mid-section subheadings without a code change. */
+/** Renders a block of text line-by-line, recognizing:
+ *    "# "/"## "/"### " at the start of a line → H1/H2/H3 (font-display styled)
+ *    "- " or "* " at the start of one or more consecutive lines → a bullet list
+ *    "{{image:URL}}" alone on a line → an inline image
+ *  and anything else as a plain paragraph (via renderRich, so bold/links/
+ *  colour/size all still work inside it). Blank lines are skipped rather than
+ *  producing empty paragraphs — they're just separators between blocks. This
+ *  is a superset of the old "## "/"### "-only heading convention, so any
+ *  existing single-line paragraph renders exactly as it did before. */
+export function renderBlockText(text: string, pClassName: string, keyPrefix = ""): ReactNode[] {
+  const out: ReactNode[] = [];
+  let bulletBuf: string[] = [];
+  let key = 0;
+  const flushBullets = () => {
+    if (!bulletBuf.length) return;
+    out.push(
+      <ul key={`${keyPrefix}bul-${key++}`} className="space-y-1.5 my-2">
+        {bulletBuf.map((b, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <span className="text-saffron mt-1.5">•</span>
+            <span className={pClassName}>{renderRich(b)}</span>
+          </li>
+        ))}
+      </ul>
+    );
+    bulletBuf = [];
+  };
+  for (const line of text.split("\n")) {
+    const bullet = line.match(/^[-*]\s+(.+)/);
+    if (bullet) { bulletBuf.push(bullet[1]); continue; }
+    flushBullets();
+    if (!line.trim()) continue;
+    const h1 = line.match(/^#\s+(.+)/);
+    if (h1) { out.push(<h1 key={`${keyPrefix}h-${key++}`} className="font-display text-2xl md:text-3xl text-palace mt-6 mb-2 first:mt-0">{renderRich(h1[1])}</h1>); continue; }
+    const h2 = line.match(/^##\s+(.+)/);
+    if (h2) { out.push(<h2 key={`${keyPrefix}h-${key++}`} className="font-display text-lg md:text-xl text-palace mt-5 mb-2 first:mt-0">{renderRich(h2[1])}</h2>); continue; }
+    const h3 = line.match(/^###\s+(.+)/);
+    if (h3) { out.push(<h3 key={`${keyPrefix}h-${key++}`} className="font-display text-base md:text-lg text-palace mt-4 mb-1.5 first:mt-0">{renderRich(h3[1])}</h3>); continue; }
+    const img = line.match(/^\{\{image:([^}]+)\}\}$/);
+    if (img) { out.push(<img key={`${keyPrefix}img-${key++}`} src={img[1]} alt="" loading="lazy" decoding="async" className="w-full rounded-xl my-3 object-cover" />); continue; }
+    out.push(<p key={`${keyPrefix}p-${key++}`} className={pClassName}>{renderRich(line)}</p>);
+  }
+  flushBullets();
+  return out;
+}
+
+/** Renders body paragraphs — each array item is passed through
+ *  `renderBlockText`, so within any one paragraph field, an admin can mix
+ *  headings, bullet lists, inline images and plain text by using the
+ *  editor's toolbar (each insert adds the right line-prefix/markup). */
 export function renderBody(paragraphs: string[], pClassName: string): ReactNode[] {
-  return paragraphs.map((p, j) => {
-    const h2 = p.match(/^##\s+(.+)/);
-    if (h2) return <h2 key={j} className="font-display text-lg md:text-xl text-palace mt-5 mb-2 first:mt-0">{renderRich(h2[1])}</h2>;
-    const h3 = p.match(/^###\s+(.+)/);
-    if (h3) return <h3 key={j} className="font-display text-base md:text-lg text-palace mt-4 mb-1.5 first:mt-0">{renderRich(h3[1])}</h3>;
-    return <p key={j} className={pClassName}>{renderRich(p)}</p>;
-  });
+  return paragraphs.flatMap((p, j) => renderBlockText(p, pClassName, `b${j}-`));
 }
 
 export function slugify(s: string) {
@@ -334,7 +375,7 @@ export function BulletItemCards({ items, textSize = "text-[13px]", className = "
       {items.map((item, idx) => (
         <div key={idx}>
           <p className="text-[10px] font-bold uppercase tracking-widest text-saffron/80 mb-1">{renderRich(item.title)}</p>
-          <p className={`text-palace/70 leading-relaxed ${textSize}`}>{renderRich(item.description)}</p>
+          <div className="text-palace/70 leading-relaxed">{renderBlockText(item.description, textSize, `bi${idx}-`)}</div>
         </div>
       ))}
     </div>
@@ -534,13 +575,13 @@ export function GuideTemplate({ guide }: { guide: GuideContent }) {
         <img src={mandala} alt="" aria-hidden className="pointer-events-none absolute -left-36 -top-28 w-[460px] opacity-[0.06] animate-spin-slow" />
         <div className="relative z-10 max-w-6xl mx-auto">
             <div className="max-w-3xl mx-auto">
-              <p className="text-palace/75 text-[15px] leading-relaxed mb-6">{renderRich(guide.intro)}</p>
+              <div className="text-palace/75 mb-6">{renderBlockText(guide.intro, "text-[15px] leading-relaxed")}</div>
 
               {/* Quick Answer — AEO/GEO answer-engine callout */}
               {guide.quickAnswer && (
                 <div id="quick-answer" className="mb-8 rounded-2xl border-l-4 border-saffron bg-white/90 p-5 shadow-sm scroll-mt-24">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-saffron mb-1.5">Quick Answer</p>
-                  <p className="text-palace/85 text-[14.5px] leading-relaxed font-medium">{renderRich(guide.quickAnswer)}</p>
+                  <div className="text-palace/85 font-medium">{renderBlockText(guide.quickAnswer, "text-[14.5px] leading-relaxed font-medium")}</div>
                 </div>
               )}
             </div>
@@ -666,7 +707,7 @@ export function GuideTemplate({ guide }: { guide: GuideContent }) {
                   {guide.faq.map((f, i) => (
                     <div key={i} className="rounded-xl border border-saffron/20 bg-white/70 p-5">
                       <p className="font-semibold text-palace mb-1.5 text-[14px]">{f.q}</p>
-                      <p className="text-palace/65 text-[13.5px] leading-relaxed">{renderRich(f.a)}</p>
+                      <div className="text-palace/65">{renderBlockText(f.a, "text-[13.5px] leading-relaxed", `faq${i}-`)}</div>
                     </div>
                   ))}
                 </div>

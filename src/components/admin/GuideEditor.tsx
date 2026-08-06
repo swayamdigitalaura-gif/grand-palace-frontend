@@ -151,6 +151,7 @@ export function GuideEditor({
             value={title}
             onChange={setTitle}
             placeholder="Guide Title (H1)"
+            allowBlocks={false}
             rows={2}
             className={`font-display text-3xl md:text-[2.4rem] leading-[1.15] text-gold-gradient w-full resize-none ${heroInputBase}`}
           />

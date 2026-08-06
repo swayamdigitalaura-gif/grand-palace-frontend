@@ -5,7 +5,7 @@ import mandala from "@/assets/mandala.png";
 import type { GuideContent } from "@/lib/guidesContent";
 import { REVIEWER, RESTAURANT_ADDRESS, RESTAURANT_PHONE_DISPLAY, RESTAURANT_PHONE_TEL, guidesContent } from "@/lib/guidesContent";
 import {
-  buildSchema, renderRich, renderBody, slugify, MobileCTABar, EXPLORE_LINKS, MAPS_URL, BulletItemCards,
+  buildSchema, renderRich, renderBody, renderBlockText, slugify, MobileCTABar, EXPLORE_LINKS, MAPS_URL, BulletItemCards,
 } from "@/components/GuideTemplate";
 
 /** Simple single-column article layout for standalone guide content that
@@ -81,13 +81,13 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
       <section className="relative section-cream py-12 px-6 overflow-hidden">
         <img src={mandala} alt="" aria-hidden className="pointer-events-none absolute -left-36 -top-28 w-[460px] opacity-[0.06] animate-spin-slow" />
         <div className="relative z-10 max-w-3xl mx-auto">
-          <p className="text-palace/75 text-[15px] leading-relaxed mb-6">{renderRich(guide.intro)}</p>
+          <div className="text-palace/75 mb-6">{renderBlockText(guide.intro, "text-[15px] leading-relaxed")}</div>
 
           {/* Quick Answer — AEO/GEO answer-engine callout */}
           {guide.quickAnswer && (
             <div id="quick-answer" className="mb-8 rounded-2xl border-l-4 border-saffron bg-white/90 p-5 shadow-sm scroll-mt-24">
               <p className="text-[10px] font-bold uppercase tracking-widest text-saffron mb-1.5">Quick Answer</p>
-              <p className="text-palace/85 text-[14.5px] leading-relaxed font-medium">{renderRich(guide.quickAnswer)}</p>
+              <div className="text-palace/85 font-medium">{renderBlockText(guide.quickAnswer, "text-[14.5px] leading-relaxed font-medium")}</div>
             </div>
           )}
 
@@ -190,7 +190,7 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
                 {guide.faq.map((f, i) => (
                   <div key={i} className="rounded-xl border border-saffron/20 bg-white/70 p-5">
                     <p className="font-semibold text-palace mb-1.5 text-[14px]">{f.q}</p>
-                    <p className="text-palace/65 text-[13.5px] leading-relaxed">{renderRich(f.a)}</p>
+                    <div className="text-palace/65">{renderBlockText(f.a, "text-[13.5px] leading-relaxed", `faq${i}-`)}</div>
                   </div>
                 ))}
               </div>
