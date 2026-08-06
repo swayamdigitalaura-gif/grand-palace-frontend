@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/admin-api";
+import { api, ApiError } from "@/lib/admin-api";
 import { LEAD_TYPES } from "./admin.leads.$type";
 import { useEffect } from "react";
 
@@ -78,18 +78,26 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isLoginPage = pathname === "/admin/login";
 
-  const { data: me, isLoading, isError } = useQuery({
+  const { data: me, isLoading, error } = useQuery({
     queryKey: ["admin-me"],
     queryFn: () => api.get<{ email: string }>("/api/auth/me"),
-    retry: false,
+    // Retry transient failures (cold serverless start, a brief network/proxy
+    // blip) instead of instantly treating them as "logged out" — only a
+    // genuine 401 from the server means the session is actually invalid.
+    // Without this, any one-off hiccup talking to /api/auth/me bounced the
+    // admin to the login screen mid-edit, which could discard unsaved work
+    // (e.g. a new guide that was never actually saved).
+    retry: (failureCount, err) => !(err instanceof ApiError && err.status === 401) && failureCount < 2,
+    retryDelay: 800,
     enabled: !isLoginPage,
   });
+  const sessionInvalid = error instanceof ApiError && error.status === 401;
 
   useEffect(() => {
-    if (!isLoginPage && !isLoading && isError) {
+    if (!isLoginPage && !isLoading && sessionInvalid) {
       navigate({ to: "/admin/login" });
     }
-  }, [isLoginPage, isLoading, isError, navigate]);
+  }, [isLoginPage, isLoading, sessionInvalid, navigate]);
 
   if (isLoginPage) return <Outlet />;
 
@@ -101,7 +109,27 @@ function AdminLayout() {
     );
   }
 
-  if (isError) return null; // redirecting
+  if (sessionInvalid) return null; // redirecting
+
+  if (error) {
+    // A genuinely non-auth error (network/server failure after retries) —
+    // don't silently discard the admin's place in the app or their unsaved
+    // work by redirecting to login; let them retry instead.
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#0c0500" }}>
+        <div className="text-center">
+          <p className="text-[#e6a020] text-sm mb-3">Couldn't reach the server. Check your connection and try again.</p>
+          <button
+            className="text-[12px] uppercase tracking-widest font-bold px-4 py-2 rounded-lg"
+            style={{ background: "linear-gradient(90deg,#c8860a,#e6a020)", color: "#fff" }}
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const onLeads = pathname.startsWith("/admin/leads");
   const activeLeadType = pathname.split("/")[3]; // /admin/leads/<type>
