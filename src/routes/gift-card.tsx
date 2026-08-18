@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
-import { Gift, Heart, PartyPopper, Briefcase, Star, ExternalLink } from "lucide-react";
+import { Gift, Heart, PartyPopper, Briefcase, Star } from "lucide-react";
 import mandala from "@/assets/mandala.png";
 import heroImgDefault from "@/assets/hero-gift-card-dessert.jpg";
 import diningImg from "@/assets/gallery/SLA09499.jpg";
@@ -64,12 +64,10 @@ function GiftCardPage() {
                 {c("intro.body2", "Easy to purchase online and even easier to enjoy — treat someone to an authentic Indian fine dining experience in the heart of Sydney CBD.")}
               </p>
               <a
-                href="https://nowbookit.com/gift-certificates/the-grand-palace"
-                target="_blank"
-                rel="noreferrer"
+                href="#purchase"
                 className="btn-gold inline-flex items-center gap-2"
               >
-                <Gift className="h-4 w-4" /> Purchase Gift Voucher <ExternalLink className="h-3.5 w-3.5" />
+                <Gift className="h-4 w-4" /> Purchase Gift Voucher
               </a>
             </div>
             <div className="relative rounded-2xl overflow-hidden shadow-[0_24px_60px_-20px_rgba(0,0,0,0.35)] min-h-[380px]">
@@ -115,6 +113,25 @@ function GiftCardPage() {
             </div>
           </div>
 
+          {/* Purchase widget */}
+          <div id="purchase" className="scroll-mt-24 mb-10">
+            <div className="text-center mb-6">
+              <p className="text-[11px] tracking-[0.4em] uppercase text-saffron/80 mb-3">Buy Now</p>
+              <h3 className="font-display text-3xl text-palace">Purchase Your <span className="italic text-saffron">Gift Voucher</span></h3>
+            </div>
+            <div className="rounded-2xl border border-saffron/20 bg-white overflow-hidden shadow-[0_20px_50px_-24px_rgba(70,40,0,0.35)]">
+              <iframe
+                src="https://app.gift-it.com.au/buy/thegrandpalace"
+                title="Purchase a Grand Palace gift voucher"
+                width="100%"
+                height="1000"
+                style={{ border: 0, display: "block" }}
+                loading="lazy"
+                allowFullScreen
+              />
+            </div>
+          </div>
+
           {/* Terms note */}
           <div className="rounded-2xl border border-saffron/20 bg-white/70 p-6 mb-8">
             <h4 className="font-display text-lg text-palace mb-3">Important Information</h4>
@@ -130,14 +147,12 @@ function GiftCardPage() {
           {/* CTA */}
           <div className="text-center">
             <a
-              href="https://nowbookit.com/gift-certificates/the-grand-palace"
-              target="_blank"
-              rel="noreferrer"
+              href="#purchase"
               className="btn-gold inline-flex items-center gap-2 text-base px-10 py-4"
             >
-              <Gift className="h-5 w-5" /> Buy a Gift Voucher Now <ExternalLink className="h-4 w-4" />
+              <Gift className="h-5 w-5" /> Buy a Gift Voucher Now
             </a>
-            <p className="text-palace/45 text-[12px] mt-3">Processed securely via Now Book It</p>
+            <p className="text-palace/45 text-[12px] mt-3">Processed securely via Gift It</p>
           </div>
         </div>
       </section>

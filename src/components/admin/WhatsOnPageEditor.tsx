@@ -3,7 +3,9 @@ import { useState } from "react";
 import { PageShell } from "@/components/PageShell";
 import { api, type SitePage } from "@/lib/admin-api";
 import { EditableImage } from "@/components/admin/EditableImage";
+import { EditableVideo } from "@/components/admin/EditableVideo";
 import { LinkField } from "@/components/admin/LinkField";
+import { RichTextArea, RichTextInput } from "@/components/admin/RichTextField";
 import type { PageSection } from "@/components/admin/SectionsEditor";
 
 const FALLBACK_IMAGE = "https://placehold.co/1200x800/2a1500/e6a020?text=Click+to+add+photo";
@@ -11,6 +13,8 @@ const FALLBACK_IMAGE = "https://placehold.co/1200x800/2a1500/e6a020?text=Click+t
 const DEFAULT_SECTIONS: PageSection[] = [
   { heading: "Section Heading", priceTag: "", intro: "", items: ["First detail", "Second detail", "Third detail"] },
 ];
+
+type ContentBlock = { subtitle: string; body: string };
 
 const BADGE_COLORS = ["#c8860a", "#e05454", "#16a085", "#6366f1", "#9333ea", "#0891b2"];
 
@@ -30,6 +34,11 @@ export function WhatsOnPageEditor({
   const [intro, setIntro] = useState(page?.intro ?? "");
   const [highlightLine, setHighlightLine] = useState(page?.highlightLine ?? "");
   const [heroImage, setHeroImage] = useState(page?.heroImage ?? "");
+  const [heroVideo, setHeroVideo] = useState(page?.heroVideo ?? "");
+  const [galleryImages, setGalleryImages] = useState<string[]>(page?.galleryImages ?? []);
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>(
+    page?.contentBlocks?.map((b) => ({ subtitle: b.subtitle ?? "", body: b.body })) ?? []
+  );
   const [cardImageHeight, setCardImageHeight] = useState(page?.cardImageHeight ?? 200);
   const [sidebarImage, setSidebarImage] = useState(page?.sidebarImage ?? "");
   const [ctaLabel, setCtaLabel] = useState(page?.ctaLabel ?? "Book a Table");
@@ -45,13 +54,19 @@ export function WhatsOnPageEditor({
   function updateItem(sIdx: number, iIdx: number, value: string) {
     updateSection(sIdx, { items: sections[sIdx].items.map((it, idx) => (idx === iIdx ? value : it)) });
   }
+  function updateContentBlock(i: number, patch: Partial<ContentBlock>) {
+    setContentBlocks((prev) => prev.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+  }
 
   const save = useMutation({
     mutationFn: () => {
       const data = {
         emoji: emoji || null, badge: badge || null, badgeColor,
         title, subtitle, intro, highlightLine,
-        heroImage, cardImageHeight, sidebarImage, ctaLabel, ctaHref,
+        heroImage, heroVideo: heroVideo || null,
+        galleryImages: galleryImages.length ? galleryImages : null,
+        contentBlocks: contentBlocks.length ? contentBlocks : null,
+        cardImageHeight, sidebarImage, ctaLabel, ctaHref,
         cta2Label: cta2Label || null, cta2Href: cta2Href || null,
         published, sections,
       };
@@ -147,25 +162,103 @@ export function WhatsOnPageEditor({
             </div>
           </div>
 
+          {/* HERO VIDEO — optional, shown instead of the static hero image on the live page when set */}
+          <div className="bg-white px-6 py-5 border-b border-stone-100">
+            <div className="max-w-6xl mx-auto">
+              <p className="text-[11px] uppercase tracking-widest font-bold text-stone-400 mb-2">Hero video (optional — overrides the hero photo above when set)</p>
+              <EditableVideo
+                value={heroVideo}
+                onChange={setHeroVideo}
+                className="relative rounded-xl overflow-hidden border border-stone-200 h-40 max-w-md"
+                videoClassName="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
+          {/* GALLERY STRIP — extra photos shown below the hero */}
+          <div className="bg-white px-6 py-5 border-b border-stone-100">
+            <div className="max-w-6xl mx-auto">
+              <p className="text-[11px] uppercase tracking-widest font-bold text-stone-400 mb-2">Extra photos below the hero (optional)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {galleryImages.map((src, i) => (
+                  <div key={i} className="relative rounded-xl overflow-hidden border border-stone-200 aspect-[4/3]">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setGalleryImages((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-1.5 right-1.5 text-[10px] font-bold px-2 py-1 rounded-full bg-black/60 text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <EditableImage
+                  value=""
+                  onChange={(url) => setGalleryImages((prev) => [...prev, url])}
+                  placeholder="https://placehold.co/400x300/2a1500/e6a020?text=+"
+                  className="rounded-xl overflow-hidden border border-dashed border-stone-300 aspect-[4/3]"
+                  imgClassName="w-full h-full object-cover opacity-0"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* CONTENT */}
-          <section className="section-cream py-12 md:py-20 px-6">
+          <section className="bg-white py-12 md:py-20 px-6">
             <div className="max-w-6xl mx-auto grid lg:grid-cols-[1fr_360px] gap-12 items-start">
               <div className="order-3 lg:order-1">
                 <div className="block rounded-lg px-4 py-2.5 mb-6 border w-full max-w-xl" style={{ background: "rgba(200,134,10,0.08)", borderColor: "rgba(200,134,10,0.25)" }}>
-                  <input
+                  <RichTextInput
                     value={highlightLine}
-                    onChange={(e) => setHighlightLine(e.target.value)}
+                    onChange={setHighlightLine}
                     placeholder="Highlight line — e.g. Limited Time Offer!"
                     className={`text-amber-800 font-semibold text-[14px] md:text-[15px] w-full ${inputBaseDark}`}
                   />
                 </div>
-                <textarea
-                  value={intro}
-                  onChange={(e) => setIntro(e.target.value)}
-                  placeholder="Intro paragraph — a sentence or two introducing this offer"
-                  rows={2}
-                  className={`text-stone-800 leading-relaxed mb-8 max-w-2xl text-[15px] w-full ${inputBaseDark}`}
-                />
+                <div className="mb-8 max-w-2xl">
+                  <RichTextArea
+                    value={intro}
+                    onChange={setIntro}
+                    placeholder="Intro paragraph — a sentence or two introducing this offer"
+                    rows={2}
+                    className={`text-stone-800 leading-relaxed text-[15px] w-full ${inputBaseDark}`}
+                  />
+                </div>
+
+                {/* Extra description/subtitle blocks — repeatable, each with its own optional subtitle and rich body */}
+                {contentBlocks.map((block, i) => (
+                  <div key={i} className="rounded-2xl bg-white border border-stone-200 shadow-sm p-6 md:p-7 mb-6 relative max-w-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setContentBlocks((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-3 right-3 text-red-500 text-xs font-semibold"
+                    >
+                      Remove Block
+                    </button>
+                    <div className="pr-24 mb-2">
+                      <RichTextInput
+                        value={block.subtitle}
+                        onChange={(v) => updateContentBlock(i, { subtitle: v })}
+                        placeholder="Subtitle (optional)"
+                        className={`font-display text-lg md:text-xl text-stone-900 w-full ${inputBaseDark}`}
+                      />
+                    </div>
+                    <RichTextArea
+                      value={block.body}
+                      onChange={(v) => updateContentBlock(i, { body: v })}
+                      placeholder="Description text — use the toolbar for headings, bullets, links, colour, size, or inline images"
+                      rows={4}
+                      className={`text-stone-700 leading-relaxed text-[15px] w-full ${inputBaseDark}`}
+                    />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setContentBlocks((prev) => [...prev, { subtitle: "", body: "" }])}
+                  className="btn-outline-gold !text-[11px] !px-4 !py-2 mb-8"
+                >
+                  + Add Description Block
+                </button>
 
                 {sections.map((sec, i) => (
                   <div key={i} className="rounded-2xl bg-white border border-stone-200 shadow-sm p-6 md:p-7 mb-6 relative">
@@ -177,12 +270,14 @@ export function WhatsOnPageEditor({
                       Remove Section
                     </button>
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-1 pr-24">
-                      <input
-                        value={sec.heading}
-                        onChange={(e) => updateSection(i, { heading: e.target.value })}
-                        placeholder="Section heading"
-                        className={`font-display text-xl md:text-2xl text-stone-900 flex-1 min-w-[160px] ${inputBaseDark}`}
-                      />
+                      <div className="flex-1 min-w-[160px]">
+                        <RichTextInput
+                          value={sec.heading}
+                          onChange={(v) => updateSection(i, { heading: v })}
+                          placeholder="Section heading"
+                          className={`font-display text-xl md:text-2xl text-stone-900 w-full ${inputBaseDark}`}
+                        />
+                      </div>
                       {sec.priceTag ? (
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <input
@@ -211,9 +306,9 @@ export function WhatsOnPageEditor({
                         </button>
                       )}
                     </div>
-                    <input
+                    <RichTextInput
                       value={sec.intro ?? ""}
-                      onChange={(e) => updateSection(i, { intro: e.target.value })}
+                      onChange={(v) => updateSection(i, { intro: v })}
                       placeholder="Section intro line (optional)"
                       className={`text-stone-500 text-[14px] mb-4 w-full ${inputBaseDark}`}
                     />
@@ -223,12 +318,14 @@ export function WhatsOnPageEditor({
                             className="flex items-start gap-2.5 text-stone-700 text-[14px] leading-relaxed rounded-lg px-3.5 py-2.5"
                             style={{ background: j % 2 === 0 ? "rgba(200,140,30,0.06)" : "transparent" }}>
                           <span className="text-amber-600 mt-0.5 flex-shrink-0">●</span>
-                          <input
-                            value={item}
-                            onChange={(e) => updateItem(i, j, e.target.value)}
-                            placeholder="Detail line"
-                            className={`flex-1 ${inputBaseDark}`}
-                          />
+                          <div className="flex-1">
+                            <RichTextInput
+                              value={item}
+                              onChange={(v) => updateItem(i, j, v)}
+                              placeholder="Detail line"
+                              className={`w-full ${inputBaseDark}`}
+                            />
+                          </div>
                           <button
                             type="button"
                             onClick={() => updateSection(i, { items: sec.items.filter((_, idx) => idx !== j) })}

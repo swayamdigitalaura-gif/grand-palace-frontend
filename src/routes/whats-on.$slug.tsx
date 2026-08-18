@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { WhatsOnSimpleTemplate } from "@/components/WhatsOnSimpleTemplate";
+import { renderRich, renderBlockText } from "@/components/GuideTemplate";
 import { api, type SitePage } from "@/lib/admin-api";
 
 export const Route = createFileRoute("/whats-on/$slug")({
@@ -34,9 +35,20 @@ function WhatsOnPage() {
       title={page.title}
       subtitle={page.subtitle}
       heroImage={page.heroImage}
-      highlightLine={page.highlightLine ?? undefined}
-      intro={page.intro ?? undefined}
-      sections={page.sections}
+      heroVideo={page.heroVideo ?? undefined}
+      galleryImages={page.galleryImages ?? undefined}
+      highlightLine={page.highlightLine ? renderRich(page.highlightLine) : undefined}
+      intro={page.intro ? renderBlockText(page.intro, "text-stone-800 leading-relaxed mb-2 last:mb-0 text-[15px]") : undefined}
+      contentBlocks={page.contentBlocks?.map((b) => ({
+        subtitle: b.subtitle ? renderRich(b.subtitle) : undefined,
+        body: renderBlockText(b.body, "text-stone-700 leading-relaxed mb-2 last:mb-0 text-[15px]"),
+      }))}
+      sections={page.sections.map((sec) => ({
+        heading: sec.heading,
+        priceTag: sec.priceTag,
+        intro: sec.intro ? renderRich(sec.intro) : undefined,
+        items: sec.items.map((item) => renderRich(item)),
+      }))}
       sidebarImage={page.sidebarImage}
       cta={cta}
       cta2={cta2}

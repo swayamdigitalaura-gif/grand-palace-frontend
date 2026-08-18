@@ -3,14 +3,24 @@ import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 
-/* ── data shape — designed so a backend/CMS can populate this 1:1 later ── */
+/* ── data shape — designed so a backend/CMS can populate this 1:1 later ──
+ * Rich-text fields (highlightLine, intro, section intro/items, contentBlocks)
+ * are typed as ReactNode: the raw markup ({{color}}/{{size}}/links/headings/
+ * bullets, same convention as Guides) is resolved by the caller via
+ * renderRich/renderBlockText before it reaches this component, which stays
+ * purely presentational. */
 export type WhatsOnCta = { label: string; to?: string; href?: string; external?: boolean };
 
 export type WhatsOnSection = {
   heading: string;
   priceTag?: string;
-  intro?: string;
-  items: string[];
+  intro?: ReactNode;
+  items: ReactNode[];
+};
+
+export type WhatsOnContentBlock = {
+  subtitle?: ReactNode;
+  body: ReactNode;
 };
 
 export type WhatsOnSimplePageData = {
@@ -19,8 +29,11 @@ export type WhatsOnSimplePageData = {
   title: string;
   subtitle: string;
   heroImage: string;
+  heroVideo?: string;
+  galleryImages?: string[];
   highlightLine?: ReactNode;
-  intro?: string;
+  intro?: ReactNode;
+  contentBlocks?: WhatsOnContentBlock[];
   sections: WhatsOnSection[];
   sidebarImage: string;
   cta: WhatsOnCta;
@@ -44,14 +57,19 @@ function CtaButton({ cta, solid }: { cta: WhatsOnCta; solid: boolean }) {
   );
 }
 
-export function WhatsOnSimpleTemplate({ title, subtitle, heroImage, emoji, highlightLine, intro, sections, sidebarImage, cta, cta2, crumbLabel }: WhatsOnSimplePageData) {
+export function WhatsOnSimpleTemplate({ title, subtitle, heroImage, heroVideo, galleryImages, emoji, highlightLine, intro, contentBlocks, sections, sidebarImage, cta, cta2, crumbLabel }: WhatsOnSimplePageData) {
   return (
     <PageShell crumbs={[{ label: "What's On", to: "/whats-on" }, { label: crumbLabel }]}>
 
       {/* ══ HERO — same height/style as the menu pages ══ */}
       <div className="relative flex items-center justify-center text-center overflow-hidden" style={{ minHeight: "46vh" }}>
-        <img src={heroImage} alt={title} className="absolute inset-0 w-full h-full object-cover"
-             fetchPriority="high" decoding="async" />
+        {heroVideo ? (
+          <video src={heroVideo} poster={heroImage} className="absolute inset-0 w-full h-full object-cover"
+                 autoPlay muted loop playsInline />
+        ) : (
+          <img src={heroImage} alt={title} className="absolute inset-0 w-full h-full object-cover"
+               fetchPriority="high" decoding="async" />
+        )}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(6,2,0,0.82) 0%, rgba(8,3,0,0.78) 50%, rgba(10,4,0,0.85) 100%)" }} />
         <div className="relative flex flex-col items-center gap-4 px-6 py-10">
           <p className="text-[9px] tracking-[0.7em] uppercase font-bold" style={{ color: "#f5c14a", textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
@@ -71,8 +89,21 @@ export function WhatsOnSimpleTemplate({ title, subtitle, heroImage, emoji, highl
         </div>
       </div>
 
+      {/* ══ GALLERY STRIP — extra photos beneath the hero ══ */}
+      {galleryImages && galleryImages.length > 0 && (
+        <div className="bg-white px-6 py-6 border-b border-stone-100">
+          <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {galleryImages.map((src, i) => (
+              <div key={i} className="rounded-xl overflow-hidden aspect-[4/3] border border-stone-200">
+                <img src={src} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ══ CONTENT ══ */}
-      <section className="section-cream py-12 md:py-20 px-6">
+      <section className="bg-white py-12 md:py-20 px-6">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[1fr_360px] gap-12 items-start">
 
           {/* mobile-only highlight — shown above the image; hidden on desktop where it lives in the content column below */}
@@ -89,7 +120,20 @@ export function WhatsOnSimpleTemplate({ title, subtitle, heroImage, emoji, highl
               </div>
             )}
             {intro && (
-              <p className="text-stone-800 leading-relaxed mb-8 max-w-2xl text-[15px]">{intro}</p>
+              <div className="text-stone-800 leading-relaxed mb-8 max-w-2xl text-[15px]">{intro}</div>
+            )}
+
+            {contentBlocks && contentBlocks.length > 0 && (
+              <div className="space-y-8 mb-8 max-w-2xl">
+                {contentBlocks.map((block, i) => (
+                  <div key={i}>
+                    {block.subtitle && (
+                      <p className="font-display text-lg md:text-xl text-stone-900 mb-2">{block.subtitle}</p>
+                    )}
+                    <div className="text-stone-700 leading-relaxed text-[15px]">{block.body}</div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {sections.map((sec, i) => (

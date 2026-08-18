@@ -207,6 +207,9 @@ export type SitePage = {
   heroImage: string;
   cardImageHeight: number | null;
   sidebarImage: string;
+  heroVideo: string | null;
+  galleryImages: string[] | null;
+  contentBlocks: Array<{ subtitle?: string; body: string }> | null;
   highlightLine: string | null;
   intro: string | null;
   sections: Array<{ heading: string; priceTag?: string; intro?: string; items: string[] }>;
@@ -245,6 +248,8 @@ export type Guide = {
   excerpt: string;
   intro: string;
   quickAnswer: string | null;
+  heroImage: string | null;
+  heroImageAlt: string | null;
   quickFacts: GuideQuickFact[] | null;
   comparisonTable: GuideComparisonTable | null;
   sections: GuideSection[];

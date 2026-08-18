@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, MapPin, Phone, Clock, ExternalLink as ExternalLinkIcon, CheckCircle2 } from "lucide-react";
+import { ArrowRight, MapPin, Phone, Mail, Clock, ExternalLink as ExternalLinkIcon, CheckCircle2 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import mandala from "@/assets/mandala.png";
 import type { GuideContent } from "@/lib/guidesContent";
-import { REVIEWER, RESTAURANT_ADDRESS, RESTAURANT_PHONE_DISPLAY, RESTAURANT_PHONE_TEL, guidesContent } from "@/lib/guidesContent";
+import { REVIEWER, RESTAURANT_ADDRESS, RESTAURANT_PHONE_DISPLAY, RESTAURANT_PHONE_TEL, RESTAURANT_EMAIL, guidesContent } from "@/lib/guidesContent";
 import {
   buildSchema, renderRich, renderBody, renderBlockText, slugify, MobileCTABar, EXPLORE_LINKS, MAPS_URL, BulletItemCards,
+  GuideHeroImage, AuthorBio,
 } from "@/components/GuideTemplate";
 
 /** Simple single-column article layout for standalone guide content that
@@ -23,12 +24,12 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
     .filter((g): g is GuideContent => Boolean(g));
 
   return (
-    <PageShell crumbs={[{ label: "Guides", to: "/guides" }, { label: guide.title }]}>
+    <PageShell crumbs={[{ label: "Guides", to: "/guides" }, { label: `${guide.tag} Guides`, to: "/guides" }, { label: guide.title }]}>
       {schemas.map((schema, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       ))}
 
-      {/* Hero — no photo; typographic + "at a glance" panel */}
+      {/* Hero — typographic + "at a glance" panel; optional photo below */}
       <div className="relative bg-palace overflow-hidden pt-24 pb-10 md:pt-28 md:pb-14 px-6">
         <img src={mandala} alt="" aria-hidden className="pointer-events-none absolute -right-40 -top-32 w-[520px] opacity-[0.07] animate-spin-slow" />
         <img src={mandala} alt="" aria-hidden className="pointer-events-none absolute -left-44 -bottom-40 w-[480px] opacity-[0.05] animate-spin-slow" style={{ animationDirection: "reverse" }} />
@@ -59,6 +60,9 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
             <a href={`tel:${RESTAURANT_PHONE_TEL}`} className="flex items-start gap-2.5 text-[13px] text-cream/80 hover:text-gold transition">
               <Phone className="h-4 w-4 text-saffron mt-0.5 shrink-0" /> {RESTAURANT_PHONE_DISPLAY}
             </a>
+            <a href={`mailto:${RESTAURANT_EMAIL}`} className="flex items-start gap-2.5 text-[13px] text-cream/80 hover:text-gold transition break-all">
+              <Mail className="h-4 w-4 text-saffron mt-0.5 shrink-0" /> {RESTAURANT_EMAIL}
+            </a>
             <div className="flex items-start gap-2.5 text-[13px] text-cream/80">
               <Clock className="h-4 w-4 text-saffron mt-0.5 shrink-0" /> Lunch 12–3pm · Dinner from 5pm, daily
             </div>
@@ -69,6 +73,8 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
           </div>
         </div>
       </div>
+
+      <GuideHeroImage guide={guide} />
 
       {/* Reviewer strip — EEAT */}
       <div className="border-b border-stone-200 bg-white">
@@ -118,13 +124,19 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
               const rowItems = section.items && section.items.length ? section.items : (section.bullets ?? []);
               return (
                 <div key={key} id={slugify(section.heading)} className="mb-8 scroll-mt-24">
-                  {section.heading && <h2 className="font-display text-xl md:text-2xl text-palace mb-4">{renderRich(section.heading)}</h2>}
+                  {section.heading && <h2 className="font-display text-xl md:text-2xl text-palace mb-3">{renderRich(section.heading)}</h2>}
+                  {renderBody(section.body, "text-palace/70 text-[14px] leading-relaxed mb-4")}
                   <div className="grid sm:grid-cols-3 gap-3">
-                    {rowItems.map((it, j) => (
-                      <div key={j} className="rounded-xl border border-saffron/20 bg-white/80 p-4 text-center">
-                        <p className="text-palace/80 text-[13px] leading-relaxed">{renderRich(it)}</p>
-                      </div>
-                    ))}
+                    {rowItems.map((it, j) => {
+                      const [titleLine, ...restLines] = it.split("\n");
+                      const description = restLines.join("\n");
+                      return (
+                        <div key={j} className="rounded-xl border border-saffron/25 bg-white p-4 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                          <p className="font-semibold text-[14px] mb-1.5" style={{ color: "#c8720a" }}>{renderRich(titleLine)}</p>
+                          {description && <p className="text-palace/70 text-[12.5px] leading-relaxed">{renderRich(description)}</p>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -181,6 +193,8 @@ export function NormalGuideTemplate({ guide }: { guide: GuideContent }) {
               </Link>
             </div>
           </div>
+
+          <AuthorBio />
 
           {/* FAQ */}
           {guide.faq.length > 0 && (

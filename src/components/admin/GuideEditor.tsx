@@ -47,6 +47,8 @@ export function GuideEditor({
   const [intro, setIntro] = useState(guide?.intro ?? "");
   const [quickAnswer, setQuickAnswer] = useState(guide?.quickAnswer ?? "");
   const [quickAnswerVisible, setQuickAnswerVisible] = useState(!!guide?.quickAnswer);
+  const [heroImage, setHeroImage] = useState(guide?.heroImage ?? "");
+  const [heroImageAlt, setHeroImageAlt] = useState(guide?.heroImageAlt ?? "");
   const [ctaLabel, setCtaLabel] = useState(guide?.ctaLabel ?? "Book a Table");
   const [ctaHref, setCtaHref] = useState(guide?.ctaHref ?? "/book-a-table");
   const [published, setPublished] = useState(guide?.published ?? true);
@@ -71,6 +73,8 @@ export function GuideEditor({
         publishedDate, publishedDateDisplay, updatedDate, updatedDateDisplay,
         excerpt, intro,
         quickAnswer: quickAnswer || null,
+        heroImage: heroImage || null,
+        heroImageAlt: heroImageAlt || null,
         quickFacts: quickFacts.length ? quickFacts : null,
         comparisonTable: compRows.length ? { title: compTitle, note: compNote || undefined, rows: compRows } : null,
         sections,
@@ -187,6 +191,28 @@ export function GuideEditor({
                 <p className="text-[12px] text-stone-500 leading-relaxed">{opt.desc}</p>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Hero Image */}
+        <div className={cardCls}>
+          <p className="font-display text-lg text-stone-900 mb-1">Hero Image</p>
+          <p className="text-[12px] text-stone-500 mb-4">Full-width photo shown below the hero band, and used as the og:image / social share image. Optional, but strongly recommended.</p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Photo</label>
+              <EditableImage
+                value={heroImage}
+                onChange={setHeroImage}
+                placeholder={FALLBACK_IMAGE}
+                className="w-full aspect-[21/9] rounded-lg overflow-hidden border border-stone-200"
+                imgClassName="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Image alt text</label>
+              <input className={inputCls} value={heroImageAlt} onChange={(e) => setHeroImageAlt(e.target.value)} placeholder="Describe what's actually in the photo" />
+            </div>
           </div>
         </div>
 

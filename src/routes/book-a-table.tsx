@@ -12,6 +12,20 @@ const EMAIL = "bookings@thegrandpalace.com.au";
 
 const OPENTABLE_URL = "https://www.opentable.com/r/the-grand-palace-indian-restaurant-fine-dining-reservations-sydney?restref=158699&lang=en-AU&ot_source=Restaurant%20website";
 
+function OpenTableWidget() {
+  return (
+    <iframe
+      src={OPENTABLE_URL}
+      width="100%"
+      height="1200"
+      frameBorder="1"
+      scrolling="yes"
+      name="opentable-make-reservation-widget"
+      title="OpenTable Reservations"
+    />
+  );
+}
+
 const reserveActionSchema = {
   "@context": "https://schema.org",
   "@type": "Restaurant",
@@ -119,17 +133,9 @@ function BookATablePage() {
             {minChargeActive && <p className="text-palace/45 text-[12px] italic">Note: Public holidays surcharge applies.</p>}
           </div>
 
-          {/* OpenTable widget */}
+          {/* OpenTable widget — embedded via iframe */}
           <div className="rounded-2xl border border-saffron/20 bg-white overflow-hidden shadow-[0_20px_50px_-24px_rgba(70,40,0,0.35)]">
-            <iframe
-              src={OPENTABLE_URL}
-              title="Book a table at The Grand Palace via OpenTable"
-              width="100%"
-              height="1200"
-              style={{ border: 0, display: "block" }}
-              loading="lazy"
-              name="opentable-make-reservation-widget"
-            />
+            <OpenTableWidget />
           </div>
         </div>
       </section>

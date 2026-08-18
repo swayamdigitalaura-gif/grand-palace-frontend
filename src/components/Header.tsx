@@ -62,13 +62,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50">
       {/* Top utility bar */}
-      <div className="hidden md:flex items-center justify-between px-8 py-2.5 text-[11px] tracking-wide text-white" style={{ background: "#c8720a" }}>
+      <div className="hidden md:flex items-center justify-between px-8 py-2.5 text-sm tracking-wide text-white" style={{ background: "#c8720a" }}>
         <a href="tel:+61280217696" className="flex items-center gap-2 hover:text-white/70 transition">
-          <Phone className="h-3 w-3" /> (02) 8021 7696
+          <Phone className="h-4 w-4" /> (02) 8021 7696
         </a>
-        <span className="tracking-[0.4em] uppercase font-semibold">Sydney CBD · Grand Indian Dining</span>
         <a href="mailto:bookings@thegrandpalace.com.au" className="flex items-center gap-2 hover:text-white/70 transition">
-          <Mail className="h-3 w-3" /> bookings@thegrandpalace.com.au
+          <Mail className="h-4 w-4" /> bookings@thegrandpalace.com.au
         </a>
       </div>
 
